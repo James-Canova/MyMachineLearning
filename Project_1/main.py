@@ -192,6 +192,9 @@ def pbChanged(pin):
        
        bglobal_nQueryPbPushed = True
        
+       #print("Button pressed.")
+       
+       
 
 #set up push button interrupt
 extintPb1 = pyb.ExtInt(pb1, pyb.ExtInt.IRQ_FALLING, pyb.Pin.PULL_UP, pbChanged)
@@ -228,6 +231,7 @@ targets_array = np.array([[0],[1],[1],[0]])
 print("Training...")
 nn.train(inputs_array, targets_array)
 print("...training complete.")
+print("Push button to query...")
 print("\n")
 bglobal_Trained = nn.bTrained
 
@@ -235,26 +239,23 @@ bglobal_Trained = nn.bTrained
 pyb.LED(red).off()
 pyb.LED(green).on()  
 
-#a = 1.1
-#print("a = {0:.0f}".format(a))
 
-
-
-#main loop
-#nn will now be trained
+#main loop==================================================================
 while True:
     
     if bglobal_nQueryPbPushed == True and nn.bTrained == True:  #then query
 
-        #state = machine.disable_irq() #disable all interrupts
+        state = machine.disable_irq() #disable all interrupts
 
         #read state of slider switches
         nValueInput0 = slider1.value()
         nValueInput1 = slider2.value()
       
-        print("Querying: input 0 = {0:.0d}, input 1 = {1:.0d}".format(nValueInput0, nValueInput1))    
+        print("Querying: {0:.0d}, {1:.0d}".format(nValueInput0, nValueInput1))    
    
-        inputs_list= numpy.array([[nValueInput0,nValueInput1]])
+        inputs_list = np.zeros((2,1))
+        inputs_list[0,0]= nValueInput0;
+        inputs_list[1,0]= nValueInput1;       
 
         final_outputs= nn.query(inputs_list)
 
@@ -283,7 +284,7 @@ while True:
 
             pass
  #
-        #machine.enable_irq(state) #re-enable all interrupts to previous state
+        machine.enable_irq(state) #re-enable all interrupts to previous state
         bglobal_nQueryPbPushed = False
         
     pass
