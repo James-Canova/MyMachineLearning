@@ -1,7 +1,7 @@
 #main.py
 #Micropython and Pyboard V1.1
-#Date: 4 March 2022
-#version V1
+#Date: 17 January 2024
+#version V4
 #James Canova
 #jscanova@gmail.com
 
@@ -9,18 +9,22 @@
 #1)"Make your own Neural Network"
 #   https://github.com/makeyourownneuralnetwork/makeyourownneuralnetwork/
 
-#Micropython with Pyboard v1.1
+#This program solves two inout (one ouput) XOR logic using a neural network
 
-#V2:
-#update forward propagration and backward propagation equations
-#updated learning rate and number of epochs
-#much better results now <8% error
+#When ran:
+#Red LED is on to indicate that the neural network is not trained
+#
 
 import micropython
 from pyb import Pin
 from ulab import numpy as np
 import random as rnd
 
+#From Micropython documentaion:
+#https://docs.micropython.org/en/v1.9.3/pyboard/library/micropython.html:
+#The buffer is used to create exceptions in cases when normal RAM allocation
+#would fail (eg within an interrupt handler) and
+#therefore give useful traceback information in these situations.
 micropython.alloc_emergency_exception_buf(100)
 
 #--------------------------------------------------------
@@ -151,7 +155,6 @@ class neuralNetwork:
                       (final_output * (1.0 - final_output)) # 1 x 1
             self.bho += dbho # 1 x 1
 
-
             #update weights for hidden layer
             hidden_error = np.dot(self.who.T, output_error) # 2 x 1 . 1 x 1  [Ref. 2, pp. 79-82 & p. 171]
             dWih = self.lr * np.dot((hidden_error * hidden_outputs * \
@@ -164,21 +167,8 @@ class neuralNetwork:
 
         self.bTrained = True
 
-    # to query (i.e. infer results)
-    def query(self, input):
 
-      #calculate hidden outputs from inputs
-      hidden_sums = np.dot(self.wih, input) + self.bih  # 2 x 2 . 2 x 1 + 2 x 1 = 2 x 1  
-      hidden_outputs = sigmoid(hidden_sums)  # 2 x 1
-
-      #calculate predicted output from hidden outputs
-      output_sum = np.dot(self.who, hidden_outputs) + self.bho   # 1 x 2 . 2 x 1 + 1 x 1 = 1 x 1 
-      inferred_output = sigmoid(output_sum)  # 1 x 1
-
-      return inferred_output # 1 x 1
-
-
-   # to query (i.e. infer results)
+   # to query (i.e. infer output from inputs)
     def query(self, input):
 
       #calculate hidden outputs from inputs
@@ -195,31 +185,31 @@ class neuralNetwork:
 #hardware inputs/outputs---------------------
 #ISR for push button
 #note that pin is type int
+#https://www.coderdojotc.org/micropython/advanced-labs/02-interrupt-handlers/
 def pbChanged(pin):
     
-       print("Interupt called")
-
        global bglobal_nQueryPbPushed
        
        bglobal_nQueryPbPushed = True
        
-
-pass
 
 #set up push button interrupt
 extintPb1 = pyb.ExtInt(pb1, pyb.ExtInt.IRQ_FALLING, pyb.Pin.PULL_UP, pbChanged)
 
 
 #main program--------------------------------
-pyb.LED(red).on()      #not yet trained so turn red LED on
-pyb.LED(green).off()   #just in case they are still on...
+#initialize LEDs
+#red LED on: not trained
+#green LED on: trained
+#blue LED on: output == 1
+#yellow LED on: output == 0
+pyb.LED(red).on()      
+pyb.LED(green).off()   
 pyb.LED(blue).off()
 pyb.LED(yellow).off()
 
-#bglobal_Trained = False
-
-# initialize neural network & then train
-
+#--------------------------------------------------------
+# initialize neural network
 # number of input, hidden and output nodes
 input_nodes = 2
 hidden_nodes = 2
@@ -238,32 +228,33 @@ targets_array = np.array([[0],[1],[1],[0]])
 print("Training...")
 nn.train(inputs_array, targets_array)
 print("...training complete.")
+print("\n")
 bglobal_Trained = nn.bTrained
-print(bglobal_Trained) 
 
-
+#indicates that the neural network is trained
 pyb.LED(red).off()
-pyb.LED(green).on()  #indicates that the neural network is trained
-pyb.LED(blue).off()
-pyb.LED(yellow).off()
+pyb.LED(green).on()  
+
+#a = 1.1
+#print("a = {0:.0f}".format(a))
+
 
 
 #main loop
+#nn will now be trained
 while True:
-    
-
     
     if bglobal_nQueryPbPushed == True and nn.bTrained == True:  #then query
 
-        print(bglobal_nQueryPbPushed, nn.bTrained)
-
-        state = machine.disable_irq() #disable all interrupts
+        #state = machine.disable_irq() #disable all interrupts
 
         #read state of slider switches
-        nValueInput1 = slider1.value()
-        nValueInput2 = slider2.value()
-        
-        inputs_list= numpy.array([[nValueInput1,nValueInput2]])
+        nValueInput0 = slider1.value()
+        nValueInput1 = slider2.value()
+      
+        print("Querying: input 0 = {0:.0d}, input 1 = {1:.0d}".format(nValueInput0, nValueInput1))    
+   
+        inputs_list= numpy.array([[nValueInput0,nValueInput1]])
 
         final_outputs= nn.query(inputs_list)
 
@@ -274,28 +265,28 @@ while True:
         if nOutput == 1:
             nOutput = 0    
         else:
-            nOutput = 1
-        
+            nOutput = 1      
 
         if nOutput == 1: #turn on blue LED
 
             pyb.LED(blue).on()
-            pyb.LED(yellow).off() 
+            pyb.LED(yellow).off()
+            print("Result is: 1")
 
         elif nOutput == 0:  #nOutput is 0 so turn on yellow LED
 
             pyb.LED(yellow).on()
             pyb.LED(blue).off()
+            print("Result is: 0")            
 
         else:
 
             pass
  #
-        machine.enable_irq(state) #re-enable all interrupts to previous state
+        #machine.enable_irq(state) #re-enable all interrupts to previous state
         bglobal_nQueryPbPushed = False
         
     pass
-
 
     #reset variables to prepare for next query
     global_bPbPushed = False
