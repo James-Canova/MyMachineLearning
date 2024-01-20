@@ -1,7 +1,7 @@
 #main.py
 #Micropython and Pyboard V1.1
-#Date: 17 January 2024
-#version V4
+#Date: 19 January 2024
+#version V5
 #James Canova
 #jscanova@gmail.com
 
@@ -19,6 +19,7 @@ import micropython
 from pyb import Pin
 from ulab import numpy as np
 import random as rnd
+import time
 
 #From Micropython documentaion:
 #https://docs.micropython.org/en/v1.9.3/pyboard/library/micropython.html:
@@ -30,8 +31,8 @@ micropython.alloc_emergency_exception_buf(100)
 #--------------------------------------------------------
 #Hyperparameters (i.e. they control the solution)
 #note: these were selected by trial and error
-LEARNING_RATE = 0.04
-EPOCHS = 20
+LEARNING_RATE = 0.08
+EPOCHS = 20000
 
 #required to obtain consistent results
 rnd.seed(30)
@@ -45,15 +46,10 @@ blue = 4
 yellow = 3
 
 
-#setup push button & sliders
-pb1 = Pin('X1', Pin.IN, Pin.PULL_UP)
-slider1 = Pin('X2', Pin.IN, Pin.PULL_NONE)
-slider2 = Pin('X3', Pin.IN, Pin.PULL_NONE)
+#setup sliders
+slider1 = Pin('X3', Pin.IN, Pin.PULL_UP)
+slider2 = Pin('X4', Pin.IN, Pin.PULL_UP)
 
-
-#setup variables
-global bglobal_nQueryPbPushed
-bglobal_nQueryPbPushed = False
 
 
 #neural network------------------------------
@@ -182,23 +178,6 @@ class neuralNetwork:
       return inferred_output # 1 x 1
 
 
-#hardware inputs/outputs---------------------
-#ISR for push button
-#note that pin is type int
-#https://www.coderdojotc.org/micropython/advanced-labs/02-interrupt-handlers/
-def pbChanged(pin):
-    
-       global bglobal_nQueryPbPushed
-       
-       bglobal_nQueryPbPushed = True
-       
-       #print("Button pressed.")
-       
-       
-
-#set up push button interrupt
-extintPb1 = pyb.ExtInt(pb1, pyb.ExtInt.IRQ_FALLING, pyb.Pin.PULL_UP, pbChanged)
-
 
 #main program--------------------------------
 #initialize LEDs
@@ -231,9 +210,7 @@ targets_array = np.array([[0],[1],[1],[0]])
 print("Training...")
 nn.train(inputs_array, targets_array)
 print("...training complete.")
-print("Push button to query...")
 print("\n")
-bglobal_Trained = nn.bTrained
 
 #indicates that the neural network is trained
 pyb.LED(red).off()
@@ -243,55 +220,46 @@ pyb.LED(green).on()
 #main loop==================================================================
 while True:
     
-    if bglobal_nQueryPbPushed == True and nn.bTrained == True:  #then query
 
-        state = machine.disable_irq() #disable all interrupts
+    #read state of slider switches
+    nValueInput0 = slider1.value()
+    nValueInput1 = slider2.value()
+    time.sleep_ms(1000)
+  
+    print("Querying: {0:.0d}, {1:.0d}".format(nValueInput0, nValueInput1))
+    
+    #for comparison to inferred result from neural network
+    if (nValueInput0 != nValueInput1):
+      nExpectedResult = 1;
+    else:
+      nExpectedResult = 0;        
+    
+    #set up inputs to neural network
+    inputs_list = np.zeros((2,1))
+    inputs_list[0,0]= nValueInput0;
+    inputs_list[1,0]= nValueInput1;       
+    
+    #use neural network to infere result (0 or 1)
+    final_outputs= nn.query(inputs_list)
+    nInferredResult = int(round(final_outputs[0,0]))
+    
+    #print inferered result and Expected result
+    print("Inferred result:{0}, Expected result:{1}".format(nInferredResult,nExpectedResult))
+    print("\n")
+    
+    #display result using LEDS
+    if nInferredResult == 1: #turn on blue LED
+        pyb.LED(blue).on()
+        pyb.LED(yellow).off()
 
-        #read state of slider switches
-        nValueInput0 = slider1.value()
-        nValueInput1 = slider2.value()
-      
-        print("Querying: {0:.0d}, {1:.0d}".format(nValueInput0, nValueInput1))    
-   
-        inputs_list = np.zeros((2,1))
-        inputs_list[0,0]= nValueInput0;
-        inputs_list[1,0]= nValueInput1;       
+    elif nInferredResult == 0:  #nOutput is 0 so turn on yellow LED
+        pyb.LED(yellow).on()
+        pyb.LED(blue).off()          
 
-        final_outputs= nn.query(inputs_list)
+    else:
+        pass
 
-        nOutput = int(round(final_outputs[0,0]))
-        
-        #to account for how the Pyboard is wired internally
-        #each input is connected to a 3.3V source with a pull up resistot
-        if nOutput == 1:
-            nOutput = 0    
-        else:
-            nOutput = 1      
-
-        if nOutput == 1: #turn on blue LED
-
-            pyb.LED(blue).on()
-            pyb.LED(yellow).off()
-            print("Result is: 1")
-
-        elif nOutput == 0:  #nOutput is 0 so turn on yellow LED
-
-            pyb.LED(yellow).on()
-            pyb.LED(blue).off()
-            print("Result is: 0")            
-
-        else:
-
-            pass
- #
-        machine.enable_irq(state) #re-enable all interrupts to previous state
-        bglobal_nQueryPbPushed = False
-        
     pass
-
-    #reset variables to prepare for next query
-    global_bPbPushed = False
-    bglobal_nQueryPbPushed = False
 
 pass    #end of infinite loop
 
