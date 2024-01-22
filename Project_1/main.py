@@ -54,6 +54,7 @@ slider2 = Pin('X4', Pin.IN, Pin.PULL_UP)
 
 #neural network------------------------------
 #general functions
+#activation function
 def sigmoid (x):
     
     return 1/(1 + np.exp(-x))
@@ -204,8 +205,8 @@ nn = neuralNetwork(input_nodes, hidden_nodes, output_nodes, LEARNING_RATE, EPOCH
 #train the neural network
 #define the training dataset, which are inputs and targets (outputs)
 #define inputs and targets for training and query
-inputs_array= np.array([[0,0],[0,1],[1,0],[1,1]])
-targets_array = np.array([[0],[1],[1],[0]])
+inputs_array= np.array([[0,0],[0,1],[1,0],[1,1]])  # 4 x 2
+targets_array = np.array([[0],[1],[1],[0]])	# 4 x 1
 
 print("Training...")
 nn.train(inputs_array, targets_array)
@@ -224,8 +225,7 @@ while True:
     #read state of slider switches
     nValueInput0 = slider1.value()
     nValueInput1 = slider2.value()
-    time.sleep_ms(1000)
-  
+
     print("Querying: {0:.0d}, {1:.0d}".format(nValueInput0, nValueInput1))
     
     #for comparison to inferred result from neural network
@@ -246,6 +246,8 @@ while True:
     #print inferered result and Expected result
     print("Inferred result:{0}, Expected result:{1}".format(nInferredResult,nExpectedResult))
     print("\n")
+    
+    time.sleep_ms(500) #to make output readable
     
     #display result using LEDS
     if nInferredResult == 1: #turn on blue LED
