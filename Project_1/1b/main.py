@@ -1,7 +1,7 @@
 #main.py
 #Micropython and Rasperry Pi Pico 
 #Date created: 19 January 2024
-#last updated: 16 March 2024
+#last updated: 19 March 2024
 
 #James Canova
 #jscanova@gmail.com
@@ -22,12 +22,6 @@ from ulab import numpy as np
 import random as rnd
 import time
 
-#From Micropython documentaion:
-#https://docs.micropython.org/en/v1.9.3/pyboard/library/micropython.html:
-#The buffer is used to create exceptions in cases when normal RAM allocation
-#would fail (eg within an interrupt handler) and
-#therefore give useful traceback information in these situations.
-micropython.alloc_emergency_exception_buf(100)
 
 #--------------------------------------------------------
 #Hyperparameters (i.e. they control the solution)
@@ -47,8 +41,8 @@ ledYellow = Pin(28, Pin.OUT)
 
 
 #setup slider switches
-SW1 = Pin(14, Pin.IN, Pin.PULL_UP)
-SW2 = Pin(15, Pin.IN, Pin.PULL_UP)
+slider1 = Pin(14, Pin.IN, Pin.PULL_UP)
+slider2 = Pin(15, Pin.IN, Pin.PULL_UP)
 
 #setup LEDs
 #red LED on: not trained
@@ -220,8 +214,8 @@ print("...training complete.")
 print("\n")
 
 #indicates that the neural network is trained
-pyb.LED(red).off()
-pyb.LED(green).on()  
+ledRed.off()
+ledGreen.on()  
 
 
 #main loop==================================================================
@@ -257,12 +251,12 @@ while True:
     
     #display result using LEDS
     if nInferredResult == 1: #turn on blue LED
-        pyb.LED(blue).on()
-        pyb.LED(yellow).off()
+        ledBlue.on()
+        ledYellow.off()
 
     elif nInferredResult == 0:  #nOutput is 0 so turn on yellow LED
-        pyb.LED(yellow).on()
-        pyb.LED(blue).off()          
+        ledYellow.on()
+        ledBlue.off()          
 
     else:
         pass
