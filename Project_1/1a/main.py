@@ -1,7 +1,8 @@
 #main.py
-#Micropython and Pyboard V1.1
-#Date: 19 January 2024
-#version V5
+#Micropython and Rasperry Pi Pico 
+#Date created: 19 January 2024
+#last updated: 16 March 2024
+
 #James Canova
 #jscanova@gmail.com
 
@@ -16,7 +17,7 @@
 #
 
 import micropython
-from pyb import Pin
+from machine import Pin
 from ulab import numpy as np
 import random as rnd
 import time
@@ -50,6 +51,11 @@ yellow = 3
 slider1 = Pin('X3', Pin.IN, Pin.PULL_UP)
 slider2 = Pin('X4', Pin.IN, Pin.PULL_UP)
 
+#setup LEDs
+#red LED on: not trained
+#green LED on: trained
+#blue LED on: output == 1
+#yellow LED on: output == 0
 
 
 #neural network------------------------------
@@ -165,8 +171,8 @@ class neuralNetwork:
         self.bTrained = True
 
 
-   # to query (i.e. infer output from inputs)
-    def query(self, input):
+   # to infere (i.e. infer output from inputs)
+    def infere(self, input):
 
       #calculate hidden outputs from inputs
       hidden_sums = np.dot(self.wih, input) + self.bih  # 2 x 2 . 2 x 1 + 2 x 1 = 2 x 1  
@@ -204,7 +210,7 @@ nn = neuralNetwork(input_nodes, hidden_nodes, output_nodes, LEARNING_RATE, EPOCH
 #--------------------------------------------------------
 #train the neural network
 #define the training dataset, which are inputs and targets (outputs)
-#define inputs and targets for training and query
+#define inputs and targets for training and infere
 inputs_array= np.array([[0,0],[0,1],[1,0],[1,1]])  # 4 x 2
 targets_array = np.array([[0],[1],[1],[0]])	# 4 x 1
 
@@ -226,7 +232,7 @@ while True:
     nValueInput0 = slider1.value()
     nValueInput1 = slider2.value()
 
-    print("Querying: {0:.0d}, {1:.0d}".format(nValueInput0, nValueInput1))
+    print("infereing: {0:.0d}, {1:.0d}".format(nValueInput0, nValueInput1))
     
     #for comparison to inferred result from neural network
     if (nValueInput0 != nValueInput1):
@@ -240,7 +246,7 @@ while True:
     inputs_list[1,0]= nValueInput1;       
     
     #use neural network to infere result (0 or 1)
-    final_outputs= nn.query(inputs_list)
+    final_outputs= nn.infere(inputs_list)
     nInferredResult = int(round(final_outputs[0,0]))
     
     #print inferered result and Expected result
