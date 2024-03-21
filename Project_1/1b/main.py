@@ -1,7 +1,8 @@
 #main.py
+
 #Micropython and Rasperry Pi Pico 
 #Date created: 19 January 2024
-#last updated: 19 March 2024
+#last updated: 21 March 2024
 
 #James Canova
 #jscanova@gmail.com
@@ -11,10 +12,6 @@
 #   https://github.com/makeyourownneuralnetwork/makeyourownneuralnetwork/
 
 #This program solves two inout (one ouput) XOR logic using a neural network
-
-#When ran:
-#Red LED is on to indicate that the neural network is not trained
-#
 
 import micropython
 from machine import Pin
@@ -83,7 +80,7 @@ class neuralNetwork:
 
     # initialise the neural network
     # note: one hidden layer only
-    # inputnodes = number of input nodes (i.e neurons or perceptrons)
+    # inputnodes = number of input nodes (aka neurons or perceptrons)
     # hiddennodes = number of hidden nodes
     # ouptutnodes = numper of output nodes
     def __init__(self, inputnodes, hiddennodes, outputnodes, learningrate, epochs):
@@ -119,7 +116,7 @@ class neuralNetwork:
         # interate through epochs 
         for c1 in range(self.epochs):
 
-          epoch_cost = 0.0  # error per epoch for plotting cost
+          epoch_cost = 0.0  # initialize cost per epoch (for plotting)  
 
           # interate through 4 inputs
           for c2 in range(inputs.shape[0]):  #inputs.shape[0] equals the number of input pairs which is 4
@@ -164,8 +161,8 @@ class neuralNetwork:
         self.bTrained = True
 
 
-   # to infere (i.e. infer output from inputs)
-    def infere(self, input):
+   # to infer (i.e. infer output from inputs)
+    def infer(self, input):
 
       #calculate hidden outputs from inputs
       hidden_sums = np.dot(self.wih, input) + self.bih  # 2 x 2 . 2 x 1 + 2 x 1 = 2 x 1  
@@ -204,7 +201,7 @@ nn = neuralNetwork(input_nodes, hidden_nodes, output_nodes, LEARNING_RATE, EPOCH
 #--------------------------------------------------------
 #train the neural network
 #define the training dataset, which are inputs and targets (outputs)
-#define inputs and targets for training and infere
+#define inputs and targets for training and infer
 inputs_array= np.array([[0,0],[0,1],[1,0],[1,1]])  # 4 x 2
 targets_array = np.array([[0],[1],[1],[0]])	# 4 x 1
 
@@ -213,7 +210,7 @@ nn.train(inputs_array, targets_array)
 print("...training complete.")
 print("\n")
 
-#indicates that the neural network is trained
+#indicate that the neural network is trained
 ledRed.off()
 ledGreen.on()  
 
@@ -226,7 +223,7 @@ while True:
     nValueInput0 = slider1.value()
     nValueInput1 = slider2.value()
 
-    print("infereing: {0:.0d}, {1:.0d}".format(nValueInput0, nValueInput1))
+    print("infering: {0:.0d}, {1:.0d}".format(nValueInput0, nValueInput1))
     
     #for comparison to inferred result from neural network
     if (nValueInput0 != nValueInput1):
@@ -239,22 +236,22 @@ while True:
     inputs_list[0,0]= nValueInput0;
     inputs_list[1,0]= nValueInput1;       
     
-    #use neural network to infere result (0 or 1)
-    final_outputs= nn.infere(inputs_list)
+    #use neural network to infer result (0 or 1)
+    final_outputs= nn.infer(inputs_list)
     nInferredResult = int(round(final_outputs[0,0]))
     
-    #print inferered result and Expected result
+    #print inferred result and expected result
     print("Inferred result:{0}, Expected result:{1}".format(nInferredResult,nExpectedResult))
     print("\n")
     
     time.sleep_ms(500) #to make output readable
     
     #display result using LEDS
-    if nInferredResult == 1: #turn on blue LED
+    if nInferredResult == 1: 
         ledBlue.on()
         ledYellow.off()
 
-    elif nInferredResult == 0:  #nOutput is 0 so turn on yellow LED
+    elif nInferredResult == 0:  
         ledYellow.on()
         ledBlue.off()          
 
