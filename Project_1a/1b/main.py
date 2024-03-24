@@ -29,23 +29,21 @@ EPOCHS = 20000
 #required to obtain consistent results
 rnd.seed(30)
 
+#setup slider switches (inputs)
+slider1 = Pin(14, Pin.IN, Pin.PULL_UP)
+slider2 = Pin(15, Pin.IN, Pin.PULL_UP)
 
-#setup LEDs
+#setup LEDs (outputs)
+#red LED on: not trained
+#green LED on: trained
+#blue LED on: output == 1
+#yellow LED on: output == 0
 ledRed = Pin(16, Pin.OUT)
 ledGreen = Pin(18, Pin.OUT)
 ledBlue = Pin(26, Pin.OUT)
 ledYellow = Pin(28, Pin.OUT)
 
 
-#setup slider switches
-slider1 = Pin(14, Pin.IN, Pin.PULL_UP)
-slider2 = Pin(15, Pin.IN, Pin.PULL_UP)
-
-#setup LEDs
-#red LED on: not trained
-#green LED on: trained
-#blue LED on: output == 1
-#yellow LED on: output == 0
 
 
 #neural network------------------------------
